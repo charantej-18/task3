@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe with Computer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1);
+            background-size: 400% 400%;
+            animation: gradientAnimation 10s ease infinite;
+            color: #fff;
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: 0 0 10px 0;
+        }
+
+        #status {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .cell.taken {
+            pointer-events: none;
+        }
+
+        .cell .symbol {
+            font-size: 40px;
+            font-weight: bold;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .symbol.x {
+            color: #ff6347;
+            text-shadow: 0 0 10px #ff6347;
+        }
+
+        .symbol.o {
+            color: #32cd32;
+            text-shadow: 0 0 10px #32cd32;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .winner {
+            animation: winnerBlast 1s infinite;
+        }
+
+        @keyframes winnerBlast {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #ffd700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #restart-btn:hover {
+            background-color: #ffc107;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <h1>Tic Tac Toe with Computer</h1>
+    <div id="status">Player X's turn</div>
+    <div id="game-board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <button id="restart-btn">Restart Game</button>
+
+    <script>
+        let board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let isGameActive = true;
+
+        const statusDisplay = document.getElementById('status');
+        const cells = document.querySelectorAll('.cell');
+        const restartBtn = document.getElementById('restart-btn');
+
+        const updateStatus = (message) => {
+            statusDisplay.textContent = message;
+        };
+
+        const highlightWinner = (combo) => {
+            combo.forEach(index => {
+                cells[index].classList.add('winner');
+            });
+        };
+
+        const checkWinner = () => {
+            const winningCombinations = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            for (const combo of winningCombinations) {
+                const [a, b, c] = combo;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    highlightWinner(combo);
+                    return board[a];
+                }
+            }
+
+            if (!board.includes(null)) return 'Tie';
+            return null;
+        };
+
+        const computerMove = () => {
+            const availableCells = board.map((val, idx) => (val === null ? idx : null)).filter(idx => idx !== null);
+            if (availableCells.length > 0) {
+                const move = availableCells[Math.floor(Math.random() * availableCells.length)];
+                board[move] = 'O';
+                cells[move].innerHTML = '<span class="symbol o">O</span>';
+                cells[move].classList.add('taken');
+
+                const result = checkWinner();
+                if (result) {
+                    isGameActive = false;
+                    updateStatus(result === 'Tie' ? "It's a tie!" : `Player ${result} wins!`);
+                } else {
+                    currentPlayer = 'X';
+                    updateStatus("Player X's turn");
+                }
+            }
+        };
+
+        const handleClick = (event) => {
+            const cell = event.target;
+            const index = cell.dataset.index;
+
+            if (board[index] || !isGameActive) return;
+
+            board[index] = 'X';
+            cell.innerHTML = '<span class="symbol x">X</span>';
+            cell.classList.add('taken');
+
+            const result = checkWinner();
+            if (result) {
+                isGameActive = false;
+                updateStatus(result === 'Tie' ? "It's a tie!" : `Player ${result} wins!`);
+                return;
+            }
+
+            currentPlayer = 'O';
+            updateStatus("Player O's turn");
+            setTimeout(computerMove, 500);
+        };
+
+        const restartGame = () => {
+            board.fill(null);
+            isGameActive = true;
+            currentPlayer = 'X';
+            cells.forEach(cell => {
+                cell.innerHTML = '';
+                cell.classList.remove('taken', 'winner');
+            });
+            updateStatus("Player X's turn");
+        };
+
+        cells.forEach(cell => cell.addEventListener('click', handleClick));
+        restartBtn.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
